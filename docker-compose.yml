@@ -1,0 +1,152 @@
+version: "3.9"
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: pms_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend:/var/www/html:delegated
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - pms_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/php/Dockerfile
+    container_name: pms_backend
+    restart: unless-stopped
+    volumes:
+      - ./backend:/var/www/html:delegated
+      - ./docker/scripts/entrypoint.sh:/entrypoint.sh:ro
+    entrypoint: ["sh", "/entrypoint.sh"]
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: mysql
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php-fpm", "-t"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - pms_network
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: ../docker/worker/Dockerfile
+    container_name: pms_worker
+    restart: unless-stopped
+    volumes:
+      - ./backend:/var/www/html:delegated
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: mysql
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      backend:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - pms_network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: pms_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app:delegated
+      - /app/node_modules
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080/api
+    depends_on:
+      - nginx
+    networks:
+      - pms_network
+
+  mysql:
+    image: mysql:8
+    container_name: pms_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: production_db
+      MYSQL_USER: pms_user
+      MYSQL_PASSWORD: pms_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/custom.cnf:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - pms_network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: pms_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: pms_user
+      PMA_PASSWORD: pms_password
+    ports:
+      - "8081:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - pms_network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: pms_rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: pms_user
+      RABBITMQ_DEFAULT_PASS: pms_password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - pms_network
+
+networks:
+  pms_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  rabbitmq_data:
