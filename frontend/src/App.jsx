@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import Inventory from "./pages/Inventory";
 import Masters from "./pages/Masters";
 import Production from "./pages/Production";
@@ -16,27 +16,38 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-slate-50 text-slate-900">
-        <header className="border-b border-slate-200 bg-white">
-          <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between">
-            <div>
+      <div className="min-h-screen bg-slate-50 text-slate-900 lg:flex">
+        <aside className="border-b border-slate-200 bg-white lg:fixed lg:inset-y-0 lg:left-0 lg:w-72 lg:border-b-0 lg:border-r">
+          <div className="flex h-full flex-col">
+            <div className="border-b border-slate-200 px-5 py-5">
               <p className="text-sm font-medium text-teal-700">Production Management System</p>
-              <h1 className="text-2xl font-semibold tracking-normal">Manufacturing Admin</h1>
+              <h1 className="mt-1 text-2xl font-semibold tracking-normal">Manufacturing Admin</h1>
             </div>
-            <nav className="flex flex-wrap gap-2">
+            <nav className="flex gap-2 overflow-x-auto px-4 py-4 lg:flex-col lg:overflow-visible">
               {navItems.map(([to, label]) => (
-                <Link
+                <NavLink
                   key={to}
                   to={to}
-                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-teal-500 hover:text-teal-700"
+                  end={to === "/"}
+                  className={({ isActive }) =>
+                    [
+                      "whitespace-nowrap rounded-md border px-3 py-2 text-sm font-medium transition",
+                      isActive
+                        ? "border-teal-600 bg-teal-50 text-teal-800"
+                        : "border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50 hover:text-teal-700",
+                    ].join(" ")
+                  }
                 >
                   {label}
-                </Link>
+                </NavLink>
               ))}
             </nav>
+            <div className="mt-auto hidden border-t border-slate-200 px-5 py-4 text-xs text-slate-500 lg:block">
+              Docker Admin Dashboard
+            </div>
           </div>
-        </header>
-        <main className="mx-auto max-w-7xl px-4 py-6">
+        </aside>
+        <main className="w-full px-4 py-6 lg:ml-72 lg:px-8">
           <Routes>
             <Route path="/" element={<Inventory />} />
             <Route path="/masters" element={<Masters />} />
