@@ -111,6 +111,20 @@ Password: pms_password
 
 ## Useful Docker Commands
 
+Docker Compose commands use service names from `docker-compose.yml`, not container names. In this project the main service names are:
+
+```text
+backend
+frontend
+worker
+nginx
+mysql
+phpmyadmin
+rabbitmq
+```
+
+The matching container names are prefixed with `pms_`, for example `pms_backend`, `pms_frontend`, and `pms_mysql`.
+
 Stop all containers:
 
 ```bash
@@ -152,11 +166,26 @@ docker compose exec backend php artisan db:seed
 docker compose exec backend php artisan route:list
 ```
 
+If you prefer plain Docker commands, use the container name:
+
+```bash
+docker exec -it pms_backend php artisan migrate
+docker exec -it pms_backend php artisan db:seed
+docker exec -it pms_backend php artisan route:list
+```
+
 Run frontend commands:
 
 ```bash
 docker compose exec frontend npm run build
 docker compose exec frontend npm run lint
+```
+
+Plain Docker equivalents:
+
+```bash
+docker exec -it pms_frontend npm run build
+docker exec -it pms_frontend npm run lint
 ```
 
 ## Main Workflow
