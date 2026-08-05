@@ -8,10 +8,10 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
-COPY --chown=www-data:www-data . .
+COPY --chown=www-data:www-data ./backend .
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction || true
 
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/worker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

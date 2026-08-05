@@ -6,11 +6,11 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-COPY local.ini /usr/local/etc/php/conf.d/local.ini
+COPY docker/php/local.ini /usr/local/etc/php/conf.d/local.ini
 
 WORKDIR /var/www/html
 
-COPY --chown=www-data:www-data . .
+COPY --chown=www-data:www-data ./backend .
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction || true
 
