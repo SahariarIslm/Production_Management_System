@@ -28,7 +28,7 @@ You do not need to install PHP, Composer, Node, MySQL, or RabbitMQ locally. Dock
 ## Clone The Project
 
 ```bash
-git clone <your-github-repository-url>
+git clone https://github.com/SahariarIslm/Production_Management_System.git
 cd Production_Management_System
 ```
 
